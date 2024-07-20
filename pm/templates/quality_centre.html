@@ -1,0 +1,205 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quality Centre</title>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link href="https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.css" rel="stylesheet" type="text/css" />
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+    <nav class="py-6 px-8 flex items-center justify-between gradient-bg shadow-md">
+        <h1 class="text-xl font-bold text-white">Quality Management</h1>
+        <div class="nav-links space-x-4 flex items-center">
+            <a href="{% url 'index' %}" class="nav-link py-2 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded transition-colors duration-200" aria-label="Home">Home</a>
+            {% if user.is_authenticated %}
+                <form method="post" action="{% url 'user_logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-button py-2 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded transition-colors duration-200" aria-label="Log out">Log out</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="auth-button py-2 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded transition-colors duration-200" aria-label="Log in">Log in</a>
+                <a href="{% url 'signup' %}" class="signup-button py-2 px-4 bg-amber-500 hover:bg-amber-600 text-white rounded transition-colors duration-200" aria-label="Sign up">Sign up</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <main class="mt-6 py-8 px-8">
+        <div class="chartCard">
+            <div class="chartBox">
+                <!-- Gantt Chart -->
+                <div id="ganttChart" style="height: 400px;"></div>
+                <!-- Form to add new task -->
+                <form id="addTaskForm">
+                    <input type="text" id="taskName" placeholder="Task Name" required>
+                    <input type="text" id="assignedTo" placeholder="Assigned To" required>
+                    <input type="date" id="startDate" required>
+                    <input type="date" id="endDate" required>
+                    <select id="status" required>
+                        <option value="0">Not Started</option>
+                        <option value="1">In Progress</option>
+                        <option value="2">Completed</option>
+                        <option value="3">On Hold</option>
+                        <option value="4">Cancelled</option>
+                        <option value="5">Delayed</option>
+                    </select>
+                    <button type="submit">Add Task</button>
+                </form>
+                <!-- Color key for Gantt chart -->
+                <div class="color-key">
+                    <div><span style="background: grey;"></span> Not Started</div>
+                    <div><span style="background: blue;"></span> In Progress</div>
+                    <div><span style="background: rgb(25, 228, 25);"></span> Completed</div>
+                    <div><span style="background: yellow;"></span> On Hold</div>
+                    <div><span style="background: black;"></span> Cancelled</div>
+                    <div><span style="background: red;"></span> Delayed</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-8 px-8 gradient-bg text-center">
+        <p class="text-white">&copy; 2024 - Newson Y. Software Developer</p>
+        <div>
+            <button class="py-4 px-8 bg-teal-700 text-white" id="theme-switcher">Switch Theme</button>
+        </div>
+    </footer>
+
+    <!-- JavaScript for Gantt chart -->
+    <script src="https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.js"></script>
+    <script>
+        // Gantt Chart initialization
+        gantt.config.xml_date = '%Y-%m-%d';
+        gantt.init('ganttChart');
+
+        // Status Color Mapping
+        const statusColors = {
+            0: 'grey',
+            1: 'blue',
+            2: 'rgb(25, 228, 25)',
+            3: 'yellow',
+            4: 'black',
+            5: 'red'
+        };
+
+        // Set Task Colors
+        gantt.templates.task_class = function(start, end, task){
+            return 'status-' + task.status;
+        };
+
+        // Fetch existing tasks on page load
+        window.onload = async () => {
+            try {
+                const response = await fetch('http://localhost:8000/api/tasks/');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const tasks = await response.json();
+                const formattedTasks = tasks.map(task => ({
+                    id: task.id,
+                    text: task.name,
+                    start_date: task.start_date,
+                    end_date: task.end_date,
+                    duration: gantt.calculateDuration(new Date(task.start_date), new Date(task.end_date)),
+                    status: task.status
+                }));
+                gantt.clearAll();
+                gantt.parse({ data: formattedTasks });
+            } catch (error) {
+                console.error('Error fetching tasks:', error);
+            }
+        };
+
+        // Handle form submission to add new task
+        document.getElementById('addTaskForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const taskName = document.getElementById('taskName').value;
+            const assignedTo = document.getElementById('assignedTo').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const status = parseInt(document.getElementById('status').value);
+
+            try {
+                const response = await fetch('http://localhost:8000/api/tasks/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: taskName,
+                        assigned_to: assignedTo,
+                        start_date: startDate,
+                        end_date: endDate,
+                        status: status,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const newTask = await response.json();
+
+                gantt.addTask({
+                    id: newTask.id,
+                    text: newTask.name,
+                    start_date: newTask.start_date,
+                    end_date: newTask.end_date,
+                    duration: gantt.calculateDuration(new Date(newTask.start_date), new Date(newTask.end_date)),
+                    status: newTask.status
+                });
+            } catch (error) {
+                console.error('Error adding task:', error);
+            }
+        });
+
+        // Handle task status update
+        gantt.attachEvent('onAfterTaskUpdate', async (id, item) => {
+            try {
+                const response = await fetch(`http://localhost:8000/api/tasks/${id}/`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: item.text,
+                        start_date: item.start_date,
+                        end_date: item.end_date,
+                        status: item.status
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+            } catch (error) {
+                console.error('Error updating task:', error);
+            }
+        });
+
+        // Handle task deletion
+        gantt.attachEvent('onAfterTaskDelete', async (id) => {
+            try {
+                const response = await fetch(`http://localhost:8000/api/tasks/${id}/`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+            } catch (error) {
+                console.error('Error deleting task:', error);
+            }
+        });
+
+        // JavaScript for theme switching
+        const themeSwitcher = document.getElementById('theme-switcher');
+        themeSwitcher.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+        });
+    </script>
+</body>
+</html>

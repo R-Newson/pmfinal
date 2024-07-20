@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <title>About - Quality Management</title>
+</head>
+<body class="bg-white dark:bg-gray-900 text-black dark:text-white font-sans">
+    <nav class="py-6 px-8 flex items-center justify-between bg-teal-600 shadow-md">
+        <h1 class="text-xl font-bold text-white">Quality Management</h1>
+        <div class="nav-links space-x-4 flex items-center">
+            <a href="{% url 'index' %}" class="nav-link py-2 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded transition-colors duration-200" aria-label="Home">Home</a>
+            <form method="post" action="{% url 'user_logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="logout-button py-2 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded transition-colors duration-200" aria-label="Log Out">Log Out</button>
+            </form>
+        </div>
+    </nav>
+
+    <main class="mt-6 py-8 px-8">
+        <h1 class="text-3xl font-bold mb-4">About</h1>
+        <div class="mt-6 space-y-6">
+            <p>Loading...</p>
+            <p>Loading...</p>
+        </div>
+    </main>
+
+    <footer class="py-8 px-8 bg-teal-600 text-center">
+        <p class="text-white">&copy; 2024 - Newson Y. Software Developer</p>
+        <div>
+            <button class="py-4 px-8 bg-teal-700 text-white" id="theme-switcher">Switch Theme</button>
+        </div>
+    </footer>
+
+    <script>
+        // JS for theme switching
+        const themeSwitcher = document.getElementById('theme-switcher');
+        themeSwitcher.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+        });
+    </script>
+</body>
+</html>

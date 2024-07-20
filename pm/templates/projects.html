@@ -1,0 +1,258 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quality Centre</title>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link href="https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.css" rel="stylesheet" type="text/css" />
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+    <nav class="py-6 px-8 flex items-center justify-between gradient-bg shadow-md">
+        <h1 class="text-xl font-bold text-white">Quality Management</h1>
+        <div class="nav-links space-x-4 flex items-center">
+          <a href="{% url 'index' %}" class="nav-link py-2 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded transition-colors duration-200" aria-label="Home">Home</a>
+          {% if user.is_authenticated %}
+              <form method="post" action="{% url 'user_logout' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="logout-button py-2 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded transition-colors duration-200" aria-label="Log out">Log out</button>
+              </form>
+          {% else %}
+              <a href="{% url 'login' %}" class="auth-button py-2 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded transition-colors duration-200" aria-label="Log in">Log in</a>
+              <a href="{% url 'signup' %}" class="signup-button py-2 px-4 bg-amber-500 hover:bg-amber-600 text-white rounded transition-colors duration-200" aria-label="Sign up">Sign up</a>
+          {% endif %}
+        </div>
+    </nav>
+<body>
+  <div class="chartMenu">
+    <p>Gantt Chart</p>
+  </div>
+  <div class="chartCard">
+    <div class="chartBox">
+      <canvas id="myChart"></canvas>
+      <input type="month" onchange="chartFilter(this)" aria-label="Filter by month" />
+      <button onclick="showAllTasks()">Show All Tasks</button>
+      <!-- A form to add new task -->
+      <form id="addTaskForm">
+        <input type="text" id="taskName" placeholder="Task Name" required>
+        <input type="text" id="assignedTo" placeholder="Assigned To" required>
+        <input type="date" id="startDate" required>
+        <input type="date" id="endDate" required>
+        <select id="status" required>
+          <option value="0">Not Started</option>
+          <option value="1">In Progress</option>
+          <option value="2">Completed</option>
+          <option value="3">On Hold</option>
+          <option value="4">Cancelled</option>
+          <option value="5">Delayed</option>
+        </select>
+        <button type="submit">Add Task</button>
+      </form>
+      <div class="color-key">
+        <div><span style="background: grey;"></span> Not Started -Grey</div>
+        <div><span style="background: blue;"></span> In Progress -Blue</div>
+        <div><span style="background: rgb(25, 228, 25);"></span> Completed -Green</div>
+        <div><span style="background: yellow;"></span> On Hold -Yellow</div>
+        <div><span style="background: black;"></span> Cancelled -Black</div>
+        <div><span style="background: red;"></span> Delayed -Red</div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="py-8 px-8 gradient-bg text-center">
+    <p class="text-white">&copy; 2024 - Newson Y. Software Developer</p>
+    <div>
+        <button class="py-4 px-8 bg-teal-700 text-white" id="theme-switcher">Switch Theme</button>
+    </div>
+</footer>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <script>
+    const colors = [
+      'grey',        // Not Started
+      'blue',        // In Progress
+      'rgb(25, 228, 25)',       // Completed
+      'yellow',      // On Hold
+      'black',       // Cancelled
+      'red'          // Delayed
+    ];
+
+    const data = {
+      datasets: [{
+        label: 'Tasks',
+        data: [],
+        backgroundColor: (ctx) => colors[ctx.raw?.status ?? 0], // Default set to 'Not Started' if status is undefined
+        borderColor: (ctx) => colors[ctx.raw?.status ?? 0],
+        borderWidth: 1,
+        borderSkipped: false,
+        borderRadius: 10,
+        barPercentage: 0.5,
+      }]
+    };
+
+    const config = {
+      type: 'bar',
+      data,
+      options: {
+        layout: {
+          padding: {
+            left: 100,
+            right: 100,
+            bottom: 20,
+          }
+        },
+        indexAxis: 'y',
+        scales: {
+          x: {
+            position: 'top',
+            type: 'time',
+            time: {
+              displayFormats: {
+                day: 'd'
+              },
+            },
+            min: '2024-06-01',
+            max: '2024-12-31',
+            grid: {
+              drawOnChartArea: false,
+              drawTicks: false,
+              lineWidth: 1
+            }
+          },
+          y: {
+            ticks: {
+              autoSkip: false
+            },
+            grid: {
+              drawOnChartArea: false,
+              drawTicks: false
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            displayColors: false,
+            yAlign: 'bottom',
+            callbacks: {
+              label: () => '',
+              title: (ctx) => {
+                const startDate = new Date(ctx[0].raw.x[0]);
+                const endDate = new Date(ctx[0].raw.x[1]);
+                const formattedStartDate = startDate.toLocaleDateString([], {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                });
+                const formattedEndDate = endDate.toLocaleDateString([], {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                });
+                return [ctx[0].raw.y, `Task Deadline: ${formattedStartDate} - ${formattedEndDate}`];
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const myChart = new Chart(
+      document.getElementById('myChart'),
+      config
+    );
+
+    // To fetch tasks from the backend when the page loads
+    window.onload = async () => {
+    try {
+        const response = await fetch('http://localhost:8000/api/tasks/');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const tasks = await response.json();
+        tasks.forEach(task => {
+            myChart.data.datasets[0].data.push({
+                x: [task.start_date, task.end_date],
+                y: task.name,
+                name: task.assigned_to,
+                status: task.status
+            });
+        });
+        myChart.update();
+    } catch (error) {
+        console.error('Error fetching tasks:', error);
+    }
+};
+
+document.getElementById('addTaskForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+
+    const taskName = document.getElementById('taskName').value;
+    const assignedTo = document.getElementById('assignedTo').value;
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    const status = parseInt(document.getElementById('status').value, 10);
+
+    const newTask = {
+        name: taskName,
+        assigned_to: assignedTo,
+        start_date: startDate,
+        end_date: endDate,
+        status: status
+    };
+
+    try {
+        const response = await fetch('http://localhost:8000/api/tasks/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newTask),
+        });
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const createdTask = await response.json();
+        myChart.data.datasets[0].data.push({
+            x: [createdTask.start_date, createdTask.end_date],
+            y: createdTask.name,
+            name: createdTask.assigned_to,
+            status: createdTask.status
+        });
+        myChart.update();
+        document.getElementById('addTaskForm').reset();
+    } catch (error) {
+        console.error('Error creating task:', error);
+    }
+});
+
+    // Function to filter tasks by selected month
+    function chartFilter(input) {
+      const selectedMonth = new Date(input.value);
+      const startOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
+      const endOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0);
+      myChart.options.scales.x.min = startOfMonth.toISOString().split('T')[0];
+      myChart.options.scales.x.max = endOfMonth.toISOString().split('T')[0];
+      myChart.update();
+    }
+
+    // Function to reset the chart to show all tasks
+    function showAllTasks() {
+      myChart.options.scales.x.min = '2024-06-01';
+      myChart.options.scales.x.max = '2024-12-31';
+      myChart.update();
+    }
+
+    // JavaScript for theme switching
+    const themeSwitcher = document.getElementById('theme-switcher');
+        themeSwitcher.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+        });
+  </script>
+</body>
+</html>

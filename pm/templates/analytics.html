@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Quality Analytics</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Simple DataTables CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        .form-control-dark {
+            border-color: var(--bs-gray);
+        }
+        .form-control-dark:focus {
+            border-color: #fff;
+            box-shadow: 0 0 0 .25rem rgba(255, 255, 255, .25);
+        }
+        .text-small {
+            font-size: 85%;
+        }
+        .dropdown-toggle:not(:focus) {
+            outline: 0;
+        }
+        body {
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            background-color: rgb(0, 1, 22);
+            color: #fff;
+        }
+        html {
+            height: -webkit-fill-available;
+        }
+        main {
+            height: 100vh;
+            height: -webkit-fill-available;
+            max-height: 100vh;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+        .dropdown-toggle {
+            outline: 0;
+        }
+        .btn-toggle {
+            padding: .25rem .5rem;
+            font-weight: 600;
+            color: var(--bs-emphasis-color);
+            background-color: transparent;
+        }
+        .btn-toggle:hover,
+        .btn-toggle:focus {
+            color: rgba(var(--bs-emphasis-color-rgb), .85);
+            background-color: var(--bs-tertiary-bg);
+        }
+        .btn-toggle::before {
+            width: 1.25em;
+            line-height: 0;
+            content: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='rgba(0,0,0,.5)' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 14l6-6-6-6'/%3e%3c/svg%3e");
+            transition: transform .35s ease;
+            transform-origin: .5em 50%;
+        }
+        [data-bs-theme="dark"] .btn-toggle::before {
+            content: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='rgba(255,255,255,.5)' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 14l6-6-6-6'/%3e%3c/svg%3e");
+        }
+        .btn-toggle[aria-expanded="true"] {
+            color: rgba(var(--bs-emphasis-color-rgb), .85);
+        }
+        .btn-toggle[aria-expanded="true"]::before {
+            transform: rotate(90deg);
+        }
+        .btn-toggle-nav a {
+            padding: .1875rem .5rem;
+            margin-top: .125rem;
+            margin-left: 1.25rem;
+        }
+        .btn-toggle-nav a:hover,
+        .btn-toggle-nav a:focus {
+            background-color: var(--bs-tertiary-bg);
+        }
+        .scrollarea {
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="p-3 text-bg-dark w-100">
+        <div class="container-fluid">
+            <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+                <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+                    <svg class="bi me-2" width="40" height="32" role="img" aria-label="Bootstrap">
+                        <use xlink:href="#bootstrap"/>
+                    </svg>
+                    <span class="fs-4">Indicators</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <div class="d-flex flex-column flex-shrink-0 p-3 text-bg-dark" style="width: 200px; position: fixed; top: 56px; height: 100%;">
+        <hr>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item">
+                <a href="/index" class="nav-link active" aria-current="page">
+                    <svg class="bi pe-none me-2" width="16" height="16"><use xlink:href="#home"/></svg>
+                    Home
+                </a>
+            </li>
+        </ul>
+        <hr>
+    </div>
+
+    <!--Content -->
+    <div class="container" style="margin-left: 200px; padding-top: 70px;">
+        <div class="my-3 mx-3">
+            <div class="d-flex">
+                <div class="col-4 card mx-3">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">Performance</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">Monthly</h6>
+                        <div>
+                            <canvas id="meChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4 card mx-3">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">Mortality</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">Monthly</h6>
+                        <div>
+                            <canvas id="meChart2"></canvas>
+                        </div>
+                        <h1 class="card-text text-end">65</h1>
+                    </div>
+                </div>
+                <div class="col-4 card mx-3">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">Department Distribution</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">Monthly</h6>
+                        <div>
+                            <canvas id="meChart3"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Root Cause Analysis Section -->
+        <div class="my-3 mx-3">
+            <h3 class="text-primary">Root Cause Analysis</h3>
+            <div class="card">
+                <div class="card-body">
+                    <p>Root cause analysis aims to identify the underlying reasons for adverse events, readmissions, and other performance issues. By addressing these root causes, the hospital can implement effective corrective actions to improve overall quality and patient safety.</p>
+                    <ul>
+                        <li><strong>Staffing Levels:</strong> Insufficient staffing in critical units such as the Renal Unit and Medical Ward.</li>
+                        <li><strong>Equipment Failures:</strong> Frequent equipment malfunctions in the Chemo Unit impacting patient outcomes.</li>
+                        <li><strong>Training Gaps:</strong> Lack of continuous training for staff in the Pediatric Ward and MCH Ward leading to increased errors.</li>
+                        <li><strong>Process Inefficiencies:</strong> Inefficient processes in patient admissions and discharges in the Surgical Ward.</li>
+                        <li><strong>Communication Issues:</strong> Poor communication among multidisciplinary teams affecting coordinated care in the HFC.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom JS -->
+    <script>
+        const ctx1 = document.getElementById('meChart').getContext('2d');
+        const ctx2 = document.getElementById('meChart2').getContext('2d');
+        const ctx3 = document.getElementById('meChart3').getContext('2d');
+
+        const meChart = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: ['Renal Unit', 'Pediatric Ward', 'MCH Ward', 'Medical Ward', 'Surgical Ward', 'Chemo Unit', 'HFC'],
+                datasets: [{
+                    label: 'Number of Patients',
+                    data: [300, 200, 500, 1000, 800, 200, 2095],
+                    borderWidth: 1,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(255, 159, 64, 0.6)',
+                        'rgba(255, 205, 86, 0.6)',
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(153, 102, 255, 0.6)',
+                        'rgba(201, 203, 207, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(255, 205, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(201, 203, 207, 1)'
+                    ]
+                },{
+                    type: 'line',
+                    label: 'Prev Month',
+                    data: [100, 150, 600, 1300, 500, 250, 2079],
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    fill: false,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        const meChart2 = new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: ['Renal Unit', 'Pediatric Ward', 'MCH Ward', 'Medical Ward', 'Surgical Ward', 'Chemo Unit', 'HFC'],
+                datasets: [{
+                    label: 'Mortality',
+                    data: [5, 2, 1, 4, 3, 10, 5],
+                    borderWidth: 1,
+                    borderColor: 'rgba(39, 80, 245, 0.8)',
+                    backgroundColor: 'rgba(204, 205, 208, 0.8)',
+                    fill: false,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        const meChart3 = new Chart(ctx3, {
+            type: 'pie',
+            data: {
+                labels: ['Renal Unit', 'Pediatric Ward', 'MCH Ward', 'Medical Ward', 'Surgical Ward', 'Chemo Unit'],
+                datasets: [{
+                    label: 'Department Distribution',
+                    data: [300, 200, 500, 1000, 800, 200],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(255, 159, 64, 0.6)',
+                        'rgba(255, 205, 86, 0.6)',
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(153, 102, 255, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(255, 205, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(153, 102, 255, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Department Distribution'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

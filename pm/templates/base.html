@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <title>{% block title %}Quality Management{% endblock %}</title>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+    <header>
+        <nav class="py-6 px-8 flex items-center justify-between bg-teal-600 shadow-md">
+            <h1 class="text-xl font-bold text-white">Quality Management</h1>
+            <div class="nav-links space-x-4 flex items-center">
+                <a href="{% url 'index' %}" class="nav-link py-2 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded transition-colors duration-200" aria-label="Home">Home</a>
+                <a href="{% url 'about' %}" class="nav-link text-white hover:text-gray-200 transition-colors duration-200" aria-label="About">About</a>
+                <a href="{% url 'projects' %}" class="nav-link text-white hover:text-gray-200 transition-colors duration-200" aria-label="Projects">Projects</a>
+                <a href="{% url 'quality_centre' %}" class="nav-link text-white hover:text-gray-200 transition-colors duration-200" aria-label="Quality Centre">Quality Centre</a>
+                <a href="{% url 'pareto_chart' %}" class="nav-link text-white hover:text-gray-200 transition-colors duration-200" aria-label="Pareto">Pareto Analysis</a>
+                <a href="{% url 'analytics' %}" class="nav-link text-white hover:text-gray-200 transition-colors duration-200" aria-label="Analytics">Analytics</a>
+                {% if user.is_authenticated %}
+                    <form method="post" action="{% url 'user_logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="logout-button py-2 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded transition-colors duration-200" aria-label="Log out">Log out</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="auth-button py-2 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded transition-colors duration-200" aria-label="Log in">Log in</a>
+                    <a href="{% url 'signup' %}" class="signup-button py-2 px-4 hover:bg-amber-600 text-white rounded transition-colors duration-200" aria-label="Sign up">Sign up</a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <div class="container flex-1 mt-6 py-8 px-8">
+        <main>
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+
+    <footer class="py-8 px-8 bg-teal-600 text-center">
+        <p class="text-white">&copy; 2024 - Newson Y. Software Developer</p>
+        <div>
+            <button class="py-4 px-8 bg-teal-700 text-white" id="theme-switcher">Switch Theme</button>
+        </div>
+    </footer>
+
+    <script>
+        // JavaScript for theme switching
+        const themeSwitcher = document.getElementById('theme-switcher');
+        themeSwitcher.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+        });
+    </script>
+</body>
+</html>
