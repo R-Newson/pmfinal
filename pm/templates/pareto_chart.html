@@ -1,54 +1,27 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <title>Pareto Analysis</title>
-</head>
-<body class="bg-gray-100 text-gray-800 font-sans">
-    <nav class="py-6 px-8 flex items-center justify-between bg-teal-600 shadow-md">
-        <h1 class="text-xl font-bold text-white">Pareto Analysis</h1>
-        <div class="nav-links space-x-4 flex items-center">
-            <a href="{% url 'index' %}" class="nav-link py-2 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded transition-colors duration-200" aria-label="Home">Home</a>
-            {% if user.is_authenticated %}
-                <form method="post" action="{% url 'user_logout' %}">
-                    {% csrf_token %}
-                    <button type="submit" class="logout-button py-2 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded transition-colors duration-200" aria-label="Log out">Log out</button>
-                </form>
-            {% else %}
-                <a href="{% url 'login' %}" class="auth-button py-2 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded transition-colors duration-200" aria-label="Log in">Log in</a>
-                <a href="{% url 'signup' %}" class="signup-button py-2 px-4 hover:bg-amber-600 text-white rounded transition-colors duration-200" aria-label="Sign up">Sign up</a>
-            {% endif %}
+{% extends 'base.html' %}
+
+{% block title %}Pareto Chart{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <form method="post">
+            {% csrf_token %}
+            <div class="group">
+                <label for="complaint_type" class="label">Complaint Types (comma-separated)</label>
+                {{ form.complaint_type }}
+            </div>
+            <div class="group">
+                <label for="number_of_complaints" class="label">Number of Complaints (comma-separated)</label>
+                {{ form.number_of_complaints }}
+            </div>
+            <div class="group">
+                <input type="submit" class="button" value="Generate Chart">
+            </div>
+        </form>
+        {% if chart %}
+        <div class="chart-container">
+            <img src="data:image/png;base64,{{ chart }}" alt="Pareto Chart">
         </div>
-    </nav>
-    <nav>
-        <div class="container">
-            <main>
-                <h1>Enter Complaint Types and Number of Complaints</h1>
-                <form method="post">
-                    {% csrf_token %}
-                    {{ form.as_p }}
-                    <button type="submit">Generate Pareto Chart</button>
-                </form>
-            </main>
-    </nav>
+        {% endif %}
     </div>
-
-    <footer class="py-8 px-8 bg-teal-600 text-center">
-        <p class="text-white">&copy; 2024 - Newson Y. Software Developer</p>
-        <div>
-            <button class="py-4 px-8 bg-teal-700 text-white" id="theme-switcher">Switch Theme</button>
-        </div>
-    </footer>
-
-    <script>
-        // JavaScript for theme switching
-        const themeSwitcher = document.getElementById('theme-switcher');
-        themeSwitcher.addEventListener('click', () => {
-            document.body.classList.toggle('dark');
-        });
-    </script>
-</body>
-</html>
+{% endblock %}

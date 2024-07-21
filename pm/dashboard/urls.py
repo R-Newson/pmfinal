@@ -1,7 +1,7 @@
 from django.urls import path, include
 from . import views
 from rest_framework.routers import DefaultRouter
-from .views import TaskViewSet, homepage, signup, user_login, user_logout, index, about, projects, quality_centre, analytics, pareto
+from .views import TaskViewSet, homepage, signup, user_login, user_logout, index, about, projects, quality_centre, analytics, pareto_chart_view
 
 router = DefaultRouter()
 router.register(r'tasks', TaskViewSet)
@@ -17,5 +17,5 @@ urlpatterns = [
     path('quality_centre/', quality_centre, name='quality_centre'),
     path('api/', include(router.urls)),
     path('analytics/', analytics, name='analytics'),
-    path('pareto/', views.pareto_chart_view, name='pareto_chart'),
+    path('pareto/', views.pareto_chart_view, name='pareto_chart_view'),
 ]

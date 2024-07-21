@@ -16,7 +16,7 @@
                 <a href="{% url 'about' %}" class="nav-link text-white hover:text-gray-200 transition-colors duration-200" aria-label="About">About</a>
                 <a href="{% url 'projects' %}" class="nav-link text-white hover:text-gray-200 transition-colors duration-200" aria-label="Projects">Projects</a>
                 <a href="{% url 'quality_centre' %}" class="nav-link text-white hover:text-gray-200 transition-colors duration-200" aria-label="Quality Centre">Quality Centre</a>
-                <a href="{% url 'pareto_chart' %}" class="nav-link text-white hover:text-gray-200 transition-colors duration-200" aria-label="Pareto">Pareto Analysis</a>
+                <a href="{% url 'pareto_chart_view' %}" class="nav-link text-white hover:text-gray-200 transition-colors duration-200" aria-label="Pareto">Pareto Analysis</a>
                 <a href="{% url 'analytics' %}" class="nav-link text-white hover:text-gray-200 transition-colors duration-200" aria-label="Analytics">Analytics</a>
                 {% if user.is_authenticated %}
                     <form method="post" action="{% url 'user_logout' %}">

@@ -5,9 +5,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .forms import CreateUserForm, LoginForm, ParetoForm
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
-from django.http import HttpResponse
-import openpyxl
-from openpyxl.chart import BarChart, Reference
+import matplotlib.pyplot as plt
+import base64
 from io import BytesIO
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -41,6 +40,7 @@ def user_login(request):
     context = {'loginform': form}
     return render(request, 'login.html', context=context)
 
+@login_required
 def pareto_chart_view(request):
     if request.method == 'POST':
         form = ParetoForm(request.POST)
@@ -48,58 +48,44 @@ def pareto_chart_view(request):
             complaint_types = [ct.strip() for ct in form.cleaned_data['complaint_type'].split(',')]
             number_of_complaints = list(map(int, form.cleaned_data['number_of_complaints'].split(',')))
 
-            # Create a workbook and select the active worksheet
-            wb = openpyxl.Workbook()
-            ws = wb.active
-
-            # Write data to the worksheet
-            ws.append(['Complaint Type', 'Number of Complaints'])
-            for ct, nc in zip(complaint_types, number_of_complaints):
-                ws.append([ct, nc])
-
             # Sort data by 'Number of Complaints'
             sorted_data = sorted(zip(complaint_types, number_of_complaints), key=lambda x: x[1], reverse=True)
-            for idx, (ct, nc) in enumerate(sorted_data, start=2):
-                ws[f'A{idx}'] = ct
-                ws[f'B{idx}'] = nc
+            sorted_complaint_types = [x[0] for x in sorted_data]
+            sorted_number_of_complaints = [x[1] for x in sorted_data]
 
-            # Calculate cumulative percentage
+            # Calculate percentages
             total_complaints = sum(number_of_complaints)
-            cumulative_percentage = []
-            cumulative_sum = 0
-            for nc in [row[1] for row in sorted_data]:
-                cumulative_sum += nc
-                cumulative_percentage.append(cumulative_sum / total_complaints * 100)
-
-            for idx, cp in enumerate(cumulative_percentage, start=2):
-                ws[f'C{idx}'] = cp
+            percentages = [(nc / total_complaints) * 100 for nc in sorted_number_of_complaints]
 
             # Create a bar chart
-            bar_chart = BarChart()
-            data = Reference(ws, min_col=2, min_row=1, max_row=len(complaint_types) + 1)
-            categories = Reference(ws, min_col=1, min_row=2, max_row=len(complaint_types) + 1)
-            bar_chart.add_data(data, titles_from_data=True)
-            bar_chart.set_categories(categories)
-            bar_chart.y_axis.title = 'Number of Complaints'
-            bar_chart.x_axis.title = 'Complaint Type'
+            fig, ax = plt.subplots()
+            bars = ax.bar(sorted_complaint_types, percentages)
 
             # Color bars above 80% differently
-            for i, nc in enumerate([row[1] for row in sorted_data]):
-                if nc > 80:
-                    # Apply red fill to bars above 80%
-                    bar_chart.series[0].graphicalProperties.solidFill = 'FF0000'
+            for bar, percentage in zip(bars, percentages):
+                if percentage > 80:
+                    bar.set_color('red')
+                else:
+                    bar.set_color('blue')
 
-            ws.add_chart(bar_chart, 'E5')
+            ax.set_xlabel('Complaint Type')
+            ax.set_ylabel('Percentage')
+            ax.set_title('Pareto Chart')
 
-            # Save the workbook to a BytesIO object
+            # Save the plot to a BytesIO object
             buffer = BytesIO()
-            wb.save(buffer)
+            plt.savefig(buffer, format='png')
             buffer.seek(0)
 
-            # Serve the Excel file as a response
-            response = HttpResponse(buffer, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-            response['Content-Disposition'] = 'attachment; filename=pareto.xlsx'
-            return response
+            # Convert plot to base64 string
+            image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            plt.close(fig)
+
+            context = {
+                'form': form,
+                'chart': image_base64
+            }
+            return render(request, 'pareto_chart.html', context)
     else:
         form = ParetoForm()
 
@@ -130,7 +116,3 @@ def quality_centre(request):
 @login_required
 def analytics(request):
     return render(request, 'analytics.html')
-
-@login_required
-def pareto(request):
-    return render(request, 'pareto_chart.html')
